@@ -1,4 +1,4 @@
-name: Build Next.js App
+name: Build and Deploy Next.js App
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [ main, master ]
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -17,7 +17,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20 # Memastikan Node.js menggunakan versi 20+
+          node-version: 20
           cache: 'npm'
 
       - name: Install dependencies
@@ -40,3 +40,14 @@ jobs:
           name: standalone-build
           path: standalone-build.tar.gz
           retention-days: 7
+
+      # -------------------------------------------------------------
+      # LANGKAH BARU: MEMANGGIL SECRET FTP UNTUK DEPLOY KE HOSTING
+      # -------------------------------------------------------------
+      - name: 🚀 Deploy Standalone Build to FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          # server-dir: ./public_html/  # Path ke folder website di hosting (hapus '#' jika beda folder)
