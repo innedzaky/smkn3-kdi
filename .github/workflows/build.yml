@@ -27,18 +27,20 @@ jobs:
           NEXT_TELEMETRY_DISABLED: 1
         run: npm run build
 
-      - name: Prepare Standalone
+      - name: Prepare Standalone Build
         run: |
           mkdir -p .next/standalone/.next
           cp -r public .next/standalone/public
           cp -r .next/static .next/standalone/.next/static
+          cp package.json .next/standalone/package.json
 
-      - name: Deploy via FTP
+      - name: Deploy to IDCloudHost via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
+
           protocol: ftp
           port: 21
 
@@ -53,3 +55,6 @@ jobs:
             **/node_modules/**
             **/.next/cache/**
             **/.next/types/**
+            README.md
+            tsconfig.json
+            next-env.d.ts
