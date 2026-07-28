@@ -2,40 +2,41 @@ name: Build Next.js App
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20 # Memastikan Node.js menggunakan versi 20+
           cache: 'npm'
 
-      - name: Install Dependencies
+      - name: Install dependencies
         run: npm ci
 
-      - name: Build Next.js App
+      - name: Build Next.js app
+        env:
+          NEXT_TELEMETRY_DISABLED: 1
         run: npm run build
 
-      - name: Compress Build Output
+      - name: Bundle Standalone Build
         run: |
-          mkdir -p deploy-package
-          cp -r .next/standalone/* deploy-package/
-          mkdir -p deploy-package/.next
-          cp -r .next/static deploy-package/.next/
-          cp -r public deploy-package/
-          tar -czvf build-output.tar.gz -C deploy-package .
+          cp -r public .next/standalone/public
+          cp -r .next/static .next/standalone/.next/static
+          tar -czf standalone-build.tar.gz -C .next/standalone .
 
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: nextjs-build-output
-          path: build-output.tar.gz
+          name: standalone-build
+          path: standalone-build.tar.gz
+          retention-days: 7
