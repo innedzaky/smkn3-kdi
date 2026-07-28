@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'standalone', // <-- Ditambahkan untuk ekspor aplikasi ringan tanpa node_modules penuh
   eslint: {
     ignoreDuringBuilds: true,
   },
