@@ -2,7 +2,7 @@
 
 import { FormEvent } from "react";
 
-const NOMOR_PANITIA = "6285241063842"; // ganti dengan nomor WA resmi panitia SPMB
+const NOMOR_PANITIA = ""; // TODO: isi nomor WA resmi panitia SPMB sebelum mengaktifkan form ini lagi (format: 62xxxxxxxxxx, tanpa spasi/simbol)
 
 export default function WhatsappContactForm() {
   function handleSubmit(e: FormEvent<HTMLFormElement>) {

@@ -23,8 +23,8 @@
   --text-on-dark: #ffffff;
   --text-on-dark-muted: #82c6f5;
   --text-label-dark: #bae1ff;
-  --font-display: "Playfair Display", serif;
-  --font-body: "DM Sans", sans-serif;
+  --font-display: var(--font-display-google), "Playfair Display", serif;
+  --font-body: var(--font-body-google), "DM Sans", sans-serif;
 }
 
 *,
@@ -37,6 +37,13 @@
 
 html {
   scroll-behavior: smooth;
+  overflow-x: hidden;
+  max-width: 100%;
+  scrollbar-width: none; /* Firefox: sembunyikan bar scroll, scroll tetap jalan */
+  -ms-overflow-style: none; /* IE/Edge lama */
+}
+html::-webkit-scrollbar {
+  display: none; /* Chrome/Safari/Edge: sembunyikan bar scroll, scroll tetap jalan */
 }
 
 body {
@@ -44,6 +51,7 @@ body {
   background: var(--cream);
   color: var(--text-dark);
   overflow-x: hidden;
+  max-width: 100%;
 }
 
 a {
@@ -525,16 +533,6 @@ nav.main-nav a.active {
   width: 28px;
   border-radius: 4px;
 }
-.slider-progress {
-  position: absolute;
-  bottom: 80px;
-  left: 0;
-  height: 3px;
-  background: var(--gold);
-  z-index: 10;
-  width: 0%;
-  transition: width 0.1s linear;
-}
 
 /* ===== ABOUT (SAMBUTAN KEPALA SEKOLAH) ===== */
 .about-section {
@@ -923,6 +921,7 @@ nav.main-nav a.active {
   background-size: cover;
   background-position: center;
   transition: transform 0.4s ease;
+  position: relative;
 }
 .news-card:hover .news-visual-area {
   transform: scale(1.02);
@@ -1197,6 +1196,8 @@ nav.main-nav a.active {
   background-size: cover;
   background-position: center;
   transition: transform 0.4s;
+  position: relative;
+  overflow: hidden;
 }
 .galeri-card:hover .galeri-img {
   transform: scale(1.05);
@@ -1687,6 +1688,7 @@ footer.site-footer {
   background: var(--light-gray);
   background-size: cover;
   background-position: center;
+  position: relative;
 }
 .artikel-body {
   max-width: 780px;
@@ -2146,11 +2148,14 @@ footer.site-footer {
   width: 96px;
   height: 96px;
   border-radius: 50%;
+  background: var(--light-gray);
   background-size: cover;
   background-position: center;
   margin: 0 auto 1rem;
   border: 3px solid var(--white);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+  position: relative;
+  overflow: hidden;
 }
 .jurusan-guru-card h4 {
   font-size: 0.95rem;
@@ -2291,12 +2296,38 @@ footer.site-footer {
 }
 
 @media (max-width: 900px) {
+  .header-inner {
+    gap: 0.6rem;
+  }
+  .logo-area {
+    flex-shrink: 1;
+    min-width: 0;
+    gap: 0.6rem;
+  }
+  .logo-text {
+    min-width: 0;
+    overflow: hidden;
+  }
+  .logo-text .school-name {
+    font-size: 1.05rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .logo-text .school-sub {
+    font-size: 0.62rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
   .menu-toggle-btn {
     display: block;
+    flex-shrink: 0;
   }
   nav.main-nav {
     display: none;
     flex-direction: column;
+    align-items: stretch;
     position: absolute;
     top: 100%;
     left: 0;
@@ -2316,6 +2347,14 @@ footer.site-footer {
     text-align: left;
     padding: 0.75rem 1rem;
     border-radius: 6px;
+  }
+  .dropdown-parent {
+    display: block;
+    width: 100%;
+  }
+  .dropdown-parent > a {
+    display: block;
+    width: 100%;
   }
   .dropdown-menu {
     position: static;
@@ -2356,7 +2395,9 @@ footer.site-footer {
     border: 1px solid rgba(0, 0, 0, 0.07);
   }
   .hero-slider {
-    height: 460px;
+    height: 440px;
+    min-height: unset;
+    max-height: unset;
   }
   .slider-arrow {
     display: none;

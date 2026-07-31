@@ -31,7 +31,7 @@ const fields: FieldConfig[] = [
   { key: "judul", label: "Judul Halaman", type: "text", required: true, placeholder: "Contoh: Fasilitas Sekolah" },
   { key: "slug", label: "Slug URL", type: "text", required: true, placeholder: "fasilitas-sekolah", hint: "Digunakan pada URL /halaman/[slug], huruf kecil & tanda hubung.", slugify: true, slugSource: "judul" },
   { key: "deskripsi", label: "Ringkasan Singkat", type: "textarea", rows: 2, placeholder: "Ringkasan singkat opsional" },
-  { key: "konten", label: "Isi Konten", type: "textarea", required: true, rows: 12, placeholder: "Tulis isi lengkap halaman di sini..." },
+  { key: "konten", label: "Isi Konten", type: "richtext", required: true, placeholder: "Tulis isi lengkap halaman di sini..." },
   { key: "penulis", label: "Penulis", type: "text", placeholder: "Admin Sekolah" },
   { key: "is_published", label: "Status", type: "checkbox", placeholder: "Terbitkan sekarang" },
 ];

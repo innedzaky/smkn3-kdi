@@ -102,10 +102,10 @@ export function TagsManager({ initialData }: { initialData: TagRow[] }) {
                       {editing === row.id ? (
                         <input
                           type="text"
+                          className="admin-input"
                           value={value}
                           autoFocus
                           onChange={(e) => setValue(e.target.value)}
-                          style={{ border: "1px solid var(--a-border)", borderRadius: 8, padding: "6px 10px", fontSize: 13.5 }}
                         />
                       ) : (
                         <span className="admin-cell-title">{row.nama}</span>

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import type { Jurusan } from "@/lib/types";
 import FadeUp from "@/components/shared/FadeUp";
 
@@ -52,12 +53,17 @@ export default function ProgramTabs({
         {activeJurusan && (
           <div className="prodi-panel active">
             <div className="prodi-visual">
-              <div
-                className="prodi-visual-bg"
-                style={{
-                  backgroundImage: `url('${activeJurusan.gambar_url}')`,
-                }}
-              />
+              {activeJurusan.gambar_url && (
+                <div className="prodi-visual-bg">
+                  <Image
+                    src={activeJurusan.gambar_url}
+                    alt={activeJurusan.nama}
+                    fill
+                    sizes="(max-width: 900px) 100vw, 50vw"
+                    style={{ objectFit: "cover" }}
+                  />
+                </div>
+              )}
               <div className="prodi-visual-overlay" />
               <div className="prodi-visual-caption">
                 <div className="prodi-visual-badge">

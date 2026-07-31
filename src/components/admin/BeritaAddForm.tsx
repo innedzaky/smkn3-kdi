@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ToastStack, type ToastMessage } from "./Toast";
+import { RichTextEditor } from "./RichTextEditor";
+import { MediaLibraryModal } from "./MediaLibraryModal";
+import { PublishBox } from "./PublishBox";
 
 interface KategoriRow {
   kategori: string;
@@ -50,7 +53,11 @@ export function BeritaAddForm({
   const [kategori, setKategori] = useState(kategoriList[0]?.kategori || "Sekolah");
   const [penulis, setPenulis] = useState("Admin Sekolah");
   const [isPublished, setIsPublished] = useState(true);
+  const [publishedAt, setPublishedAt] = useState(() => new Date().toISOString().slice(0, 16));
+  const [isSticky, setIsSticky] = useState(false);
+  const [lockModifiedDate, setLockModifiedDate] = useState(false);
   const [gambar, setGambar] = useState("");
+  const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -122,6 +129,9 @@ export function BeritaAddForm({
           gambar,
           tags: selectedTags,
           is_published: publish,
+          published_at: publishedAt,
+          is_sticky: isSticky,
+          lock_modified_date: lockModifiedDate,
         }),
       });
       const json = await res.json();
@@ -207,11 +217,9 @@ export function BeritaAddForm({
               <label>
                 Isi Konten Lengkap <span className="admin-required">*</span>
               </label>
-              <textarea
-                rows={14}
-                required
+              <RichTextEditor
                 value={konten}
-                onChange={(e) => setKonten(e.target.value)}
+                onChange={setKonten}
                 placeholder="Tuliskan isi berita atau artikel selengkapnya di sini..."
               />
             </div>
@@ -246,15 +254,18 @@ export function BeritaAddForm({
                 </datalist>
               </div>
 
-              <div className="admin-checkbox-row">
-                <input
-                  id="isPublished"
-                  type="checkbox"
-                  checked={isPublished}
-                  onChange={(e) => setIsPublished(e.target.checked)}
-                />
-                <label htmlFor="isPublished">Terbitkan sekarang</label>
-              </div>
+              <PublishBox
+                isPublished={isPublished}
+                publishedAt={publishedAt}
+                isSticky={isSticky}
+                lockModifiedDate={lockModifiedDate}
+                onChange={(patch) => {
+                  if (patch.is_published !== undefined) setIsPublished(patch.is_published);
+                  if (patch.published_at !== undefined) setPublishedAt(patch.published_at);
+                  if (patch.is_sticky !== undefined) setIsSticky(patch.is_sticky);
+                  if (patch.lock_modified_date !== undefined) setLockModifiedDate(patch.lock_modified_date);
+                }}
+              />
             </div>
           </div>
 
@@ -283,9 +294,11 @@ export function BeritaAddForm({
               <div style={{ display: "flex", gap: 6 }}>
                 <input
                   type="text"
+                  className="admin-input"
                   value={newTagInput}
                   onChange={(e) => setNewTagInput(e.target.value)}
                   placeholder="Tag baru…"
+                  style={{ flex: 1 }}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       e.preventDefault();
@@ -311,18 +324,32 @@ export function BeritaAddForm({
                 ) : (
                   <div className="admin-image-placeholder">🖼️</div>
                 )}
-                <div>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) handleUpload(file);
-                    }}
-                  />
+                <div style={{ flex: 1 }}>
+                  <div className="admin-media-tabs">
+                    <label className="admin-media-tab-btn">
+                      Upload File
+                      <input
+                        type="file"
+                        accept="image/*"
+                        style={{ display: "none" }}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleUpload(file);
+                        }}
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      className="admin-media-tab-btn"
+                      onClick={() => setMediaPickerOpen(true)}
+                    >
+                      📚 Pustaka Media
+                    </button>
+                  </div>
                   {uploading && <div className="admin-form-hint">Mengunggah…</div>}
                   <input
                     type="text"
+                    className="admin-input"
                     placeholder="atau tempel URL gambar"
                     value={gambar}
                     onChange={(e) => setGambar(e.target.value)}
@@ -330,6 +357,11 @@ export function BeritaAddForm({
                   />
                 </div>
               </div>
+              <MediaLibraryModal
+                open={mediaPickerOpen}
+                onClose={() => setMediaPickerOpen(false)}
+                onSelect={setGambar}
+              />
             </div>
           </div>
         </div>

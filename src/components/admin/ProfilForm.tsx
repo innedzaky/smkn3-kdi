@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ToastStack, type ToastMessage } from "./Toast";
+import { MediaLibraryModal } from "./MediaLibraryModal";
 import type { AdminUser } from "@/lib/types";
 
 let toastSeq = 1;
@@ -24,6 +25,7 @@ export function ProfilForm({ user }: { user: AdminUser }) {
   });
   const [savingProfile, setSavingProfile] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarPickerOpen, setAvatarPickerOpen] = useState(false);
 
   const handleAvatarUpload = async (file: File) => {
     setUploadingAvatar(true);
@@ -117,18 +119,44 @@ export function ProfilForm({ user }: { user: AdminUser }) {
                     {initials || "A"}
                   </div>
                 )}
-                <div>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) handleAvatarUpload(file);
-                    }}
-                  />
+                <div style={{ flex: 1 }}>
+                  <div className="admin-media-tabs">
+                    <label className="admin-media-tab-btn">
+                      Upload File
+                      <input
+                        type="file"
+                        accept="image/*"
+                        style={{ display: "none" }}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleAvatarUpload(file);
+                        }}
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      className="admin-media-tab-btn"
+                      onClick={() => setAvatarPickerOpen(true)}
+                    >
+                      📚 Pustaka Media
+                    </button>
+                  </div>
                   {uploadingAvatar && <div className="admin-form-hint">Mengunggah…</div>}
+                  <input
+                    type="text"
+                    className="admin-input"
+                    placeholder="atau tempel URL gambar"
+                    value={profile.avatar}
+                    onChange={(e) => setProfile((p) => ({ ...p, avatar: e.target.value }))}
+                    style={{ marginTop: 6 }}
+                  />
                 </div>
               </div>
+              <MediaLibraryModal
+                open={avatarPickerOpen}
+                onClose={() => setAvatarPickerOpen(false)}
+                onSelect={(url) => setProfile((p) => ({ ...p, avatar: url }))}
+              />
             </div>
 
             <div className="admin-form-group">

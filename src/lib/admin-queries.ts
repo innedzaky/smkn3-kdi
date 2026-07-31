@@ -1,6 +1,24 @@
 import "server-only";
+import { revalidatePath } from "next/cache";
 import { query, pool } from "@/lib/db";
 import { hashPassword, verifyPassword } from "@/lib/auth";
+
+/** Kosongkan cache ISR seluruh situs publik (semua halaman yang pakai
+ *  `export const revalidate = 60`) supaya perubahan dari admin langsung
+ *  tampil di kunjungan berikutnya, tanpa perlu menunggu jendela 60 detik. */
+function revalidatePublicSite() {
+  revalidatePath("/", "layout");
+}
+
+/** Ubah string datetime dari <input type="datetime-local"> (mis. "2026-08-01T10:00")
+ *  atau ISO string, menjadi format MySQL "YYYY-MM-DD HH:mm:ss". Kembalikan waktu
+ *  sekarang kalau input kosong/tidak valid. */
+function toMysqlDatetime(v?: string | null): string {
+  if (!v) return new Date().toISOString().slice(0, 19).replace("T", " ");
+  const d = new Date(v);
+  if (isNaN(d.getTime())) return new Date().toISOString().slice(0, 19).replace("T", " ");
+  return d.toISOString().slice(0, 19).replace("T", " ");
+}
 import type {
   AdminUser,
   AgendaItem,
@@ -40,7 +58,7 @@ export async function getDashboardStats() {
     ]);
 
   const beritaTerbaru = await query<Berita>(
-    "SELECT * FROM berita ORDER BY created_at DESC LIMIT 5"
+    "SELECT * FROM berita ORDER BY created_at DESC LIMIT 6"
   );
 
   return {
@@ -73,8 +91,8 @@ export async function adminGetBeritaById(id: number): Promise<Berita | null> {
 
 export async function adminCreateBerita(data: Partial<Berita>) {
   const result: any = await query(
-    `INSERT INTO berita (slug, judul, kategori, deskripsi, konten, gambar, penulis, is_published)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO berita (slug, judul, kategori, deskripsi, konten, gambar, penulis, is_published, is_sticky, lock_modified_date, published_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       data.slug,
       data.judul,
@@ -84,33 +102,58 @@ export async function adminCreateBerita(data: Partial<Berita>) {
       data.gambar || null,
       data.penulis || "Admin Sekolah",
       data.is_published ? 1 : 0,
+      data.is_sticky ? 1 : 0,
+      data.lock_modified_date ? 1 : 0,
+      toMysqlDatetime(data.published_at),
     ]
   );
   const beritaId: number = result.insertId;
   await syncBeritaTags(beritaId, data.tags);
+  revalidatePublicSite();
 }
 
 export async function adminUpdateBerita(id: number, data: Partial<Berita>) {
+  const params: any[] = [
+    data.slug,
+    data.judul,
+    data.kategori || "Sekolah",
+    data.deskripsi,
+    data.konten || null,
+    data.gambar || null,
+    data.penulis || "Admin Sekolah",
+    data.is_published ? 1 : 0,
+    data.is_sticky ? 1 : 0,
+    data.lock_modified_date ? 1 : 0,
+    toMysqlDatetime(data.published_at),
+  ];
+
+  // "Lock Modified Date" aktif -> pertahankan updated_at lama, jangan biarkan
+  // trigger `ON UPDATE current_timestamp()` di kolom itu menimpanya.
+  let updatedAtClause = "";
+  if (data.lock_modified_date) {
+    const existing = await query<{ updated_at: string }>(
+      "SELECT updated_at FROM berita WHERE id = ? LIMIT 1",
+      [id]
+    );
+    if (existing[0]?.updated_at) {
+      updatedAtClause = ", updated_at = ?";
+      params.push(existing[0].updated_at);
+    }
+  }
+  params.push(id);
+
   await query(
-    `UPDATE berita SET slug=?, judul=?, kategori=?, deskripsi=?, konten=?, gambar=?, penulis=?, is_published=?
+    `UPDATE berita SET slug=?, judul=?, kategori=?, deskripsi=?, konten=?, gambar=?, penulis=?, is_published=?, is_sticky=?, lock_modified_date=?, published_at=?${updatedAtClause}
      WHERE id = ?`,
-    [
-      data.slug,
-      data.judul,
-      data.kategori || "Sekolah",
-      data.deskripsi,
-      data.konten || null,
-      data.gambar || null,
-      data.penulis || "Admin Sekolah",
-      data.is_published ? 1 : 0,
-      id,
-    ]
+    params
   );
   await syncBeritaTags(id, data.tags);
+  revalidatePublicSite();
 }
 
 export async function adminDeleteBerita(id: number) {
   await query("DELETE FROM berita WHERE id = ?", [id]);
+  revalidatePublicSite();
 }
 
 export async function adminGetKategoriBerita() {
@@ -121,6 +164,7 @@ export async function adminGetKategoriBerita() {
 
 export async function adminRenameKategoriBerita(oldName: string, newName: string) {
   await query("UPDATE berita SET kategori = ? WHERE kategori = ?", [newName, oldName]);
+  revalidatePublicSite();
 }
 
 /* ------------------------------------------------------------------ */
@@ -235,6 +279,7 @@ export async function adminCreateAgenda(data: Partial<AgendaItem>) {
     "INSERT INTO agenda (tanggal, nama, lokasi, link_url, urutan) VALUES (?, ?, ?, ?, ?)",
     [data.tanggal, data.nama, data.lokasi || null, data.link_url || null, data.urutan || 0]
   );
+  revalidatePublicSite();
 }
 
 export async function adminUpdateAgenda(id: number, data: Partial<AgendaItem>) {
@@ -242,10 +287,12 @@ export async function adminUpdateAgenda(id: number, data: Partial<AgendaItem>) {
     "UPDATE agenda SET tanggal=?, nama=?, lokasi=?, link_url=?, urutan=? WHERE id = ?",
     [data.tanggal, data.nama, data.lokasi || null, data.link_url || null, data.urutan || 0, id]
   );
+  revalidatePublicSite();
 }
 
 export async function adminDeleteAgenda(id: number) {
   await query("DELETE FROM agenda WHERE id = ?", [id]);
+  revalidatePublicSite();
 }
 
 /* ------------------------------------------------------------------ */
@@ -261,6 +308,7 @@ export async function adminCreatePengumuman(data: Partial<Pengumuman>) {
     "INSERT INTO pengumuman (label, judul, lokasi, link_url, is_active) VALUES (?, ?, ?, ?, ?)",
     [data.label || "PENTING", data.judul, data.lokasi || null, data.link_url || null, data.is_active ? 1 : 0]
   );
+  revalidatePublicSite();
 }
 
 export async function adminUpdatePengumuman(id: number, data: Partial<Pengumuman>) {
@@ -268,10 +316,12 @@ export async function adminUpdatePengumuman(id: number, data: Partial<Pengumuman
     "UPDATE pengumuman SET label=?, judul=?, lokasi=?, link_url=?, is_active=? WHERE id = ?",
     [data.label || "PENTING", data.judul, data.lokasi || null, data.link_url || null, data.is_active ? 1 : 0, id]
   );
+  revalidatePublicSite();
 }
 
 export async function adminDeletePengumuman(id: number) {
   await query("DELETE FROM pengumuman WHERE id = ?", [id]);
+  revalidatePublicSite();
 }
 
 /* ------------------------------------------------------------------ */
@@ -287,6 +337,7 @@ export async function adminCreatePrestasi(data: Partial<Prestasi>) {
     "INSERT INTO prestasi (nama, bidang, keterangan, emoji, urutan, is_published) VALUES (?, ?, ?, ?, ?, ?)",
     [data.nama, data.bidang, data.keterangan, data.emoji || "🥇", data.urutan || 0, (data as any).is_published ? 1 : 0]
   );
+  revalidatePublicSite();
 }
 
 export async function adminUpdatePrestasi(id: number, data: Partial<Prestasi>) {
@@ -294,10 +345,12 @@ export async function adminUpdatePrestasi(id: number, data: Partial<Prestasi>) {
     "UPDATE prestasi SET nama=?, bidang=?, keterangan=?, emoji=?, urutan=?, is_published=? WHERE id = ?",
     [data.nama, data.bidang, data.keterangan, data.emoji || "🥇", data.urutan || 0, (data as any).is_published ? 1 : 0, id]
   );
+  revalidatePublicSite();
 }
 
 export async function adminDeletePrestasi(id: number) {
   await query("DELETE FROM prestasi WHERE id = ?", [id]);
+  revalidatePublicSite();
 }
 
 /* ------------------------------------------------------------------ */
@@ -313,6 +366,7 @@ export async function adminCreateGaleri(data: Partial<GaleriItem>) {
     "INSERT INTO galeri (judul_kegiatan, link_foto, urutan, is_published) VALUES (?, ?, ?, ?)",
     [data.judul_kegiatan, data.link_foto, data.urutan || 0, (data as any).is_published ? 1 : 0]
   );
+  revalidatePublicSite();
 }
 
 export async function adminUpdateGaleri(id: number, data: Partial<GaleriItem>) {
@@ -320,10 +374,12 @@ export async function adminUpdateGaleri(id: number, data: Partial<GaleriItem>) {
     "UPDATE galeri SET judul_kegiatan=?, link_foto=?, urutan=?, is_published=? WHERE id = ?",
     [data.judul_kegiatan, data.link_foto, data.urutan || 0, (data as any).is_published ? 1 : 0, id]
   );
+  revalidatePublicSite();
 }
 
 export async function adminDeleteGaleri(id: number) {
   await query("DELETE FROM galeri WHERE id = ?", [id]);
+  revalidatePublicSite();
 }
 
 /* ------------------------------------------------------------------ */
@@ -373,6 +429,7 @@ export async function adminSaveJurusan(id: number | null, data: Partial<Jurusan>
     }
 
     await conn.commit();
+    revalidatePublicSite();
   } catch (err) {
     await conn.rollback();
     throw err;
@@ -383,6 +440,7 @@ export async function adminSaveJurusan(id: number | null, data: Partial<Jurusan>
 
 export async function adminDeleteJurusan(id: number) {
   await query("DELETE FROM jurusan WHERE id = ?", [id]);
+  revalidatePublicSite();
 }
 
 /* ------------------------------------------------------------------ */
@@ -402,6 +460,7 @@ export async function adminCreateJurusanSkill(data: Partial<JurusanSkill>) {
     "INSERT INTO jurusan_skill (jurusan_id, icon, judul, deskripsi, urutan) VALUES (?, ?, ?, ?, ?)",
     [Number(data.jurusan_id), data.icon || "🎯", data.judul, data.deskripsi || null, data.urutan || 0]
   );
+  revalidatePublicSite();
 }
 
 export async function adminUpdateJurusanSkill(id: number, data: Partial<JurusanSkill>) {
@@ -409,10 +468,12 @@ export async function adminUpdateJurusanSkill(id: number, data: Partial<JurusanS
     "UPDATE jurusan_skill SET jurusan_id=?, icon=?, judul=?, deskripsi=?, urutan=? WHERE id=?",
     [Number(data.jurusan_id), data.icon || "🎯", data.judul, data.deskripsi || null, data.urutan || 0, id]
   );
+  revalidatePublicSite();
 }
 
 export async function adminDeleteJurusanSkill(id: number) {
   await query("DELETE FROM jurusan_skill WHERE id = ?", [id]);
+  revalidatePublicSite();
 }
 
 /* ------------------------------------------------------------------ */
@@ -432,6 +493,7 @@ export async function adminCreateJurusanChip(data: Partial<JurusanChip>) {
     "INSERT INTO jurusan_chip (jurusan_id, kategori, teks, urutan) VALUES (?, ?, ?, ?)",
     [Number(data.jurusan_id), data.kategori, data.teks, data.urutan || 0]
   );
+  revalidatePublicSite();
 }
 
 export async function adminUpdateJurusanChip(id: number, data: Partial<JurusanChip>) {
@@ -439,10 +501,12 @@ export async function adminUpdateJurusanChip(id: number, data: Partial<JurusanCh
     "UPDATE jurusan_chip SET jurusan_id=?, kategori=?, teks=?, urutan=? WHERE id=?",
     [Number(data.jurusan_id), data.kategori, data.teks, data.urutan || 0, id]
   );
+  revalidatePublicSite();
 }
 
 export async function adminDeleteJurusanChip(id: number) {
   await query("DELETE FROM jurusan_chip WHERE id = ?", [id]);
+  revalidatePublicSite();
 }
 
 /* ------------------------------------------------------------------ */
@@ -462,6 +526,7 @@ export async function adminCreateJurusanGaleriDetail(data: Partial<JurusanGaleri
     "INSERT INTO jurusan_galeri_detail (jurusan_id, kategori, judul, foto, urutan) VALUES (?, ?, ?, ?, ?)",
     [Number(data.jurusan_id), data.kategori, data.judul, data.foto, data.urutan || 0]
   );
+  revalidatePublicSite();
 }
 
 export async function adminUpdateJurusanGaleriDetail(id: number, data: Partial<JurusanGaleriDetail>) {
@@ -469,10 +534,12 @@ export async function adminUpdateJurusanGaleriDetail(id: number, data: Partial<J
     "UPDATE jurusan_galeri_detail SET jurusan_id=?, kategori=?, judul=?, foto=?, urutan=? WHERE id=?",
     [Number(data.jurusan_id), data.kategori, data.judul, data.foto, data.urutan || 0, id]
   );
+  revalidatePublicSite();
 }
 
 export async function adminDeleteJurusanGaleriDetail(id: number) {
   await query("DELETE FROM jurusan_galeri_detail WHERE id = ?", [id]);
+  revalidatePublicSite();
 }
 
 /* ------------------------------------------------------------------ */
@@ -492,6 +559,7 @@ export async function adminCreateJurusanGuru(data: Partial<JurusanGuru>) {
     "INSERT INTO jurusan_guru (jurusan_id, nama, jabatan, foto, urutan) VALUES (?, ?, ?, ?, ?)",
     [Number(data.jurusan_id), data.nama, data.jabatan || null, data.foto || null, data.urutan || 0]
   );
+  revalidatePublicSite();
 }
 
 export async function adminUpdateJurusanGuru(id: number, data: Partial<JurusanGuru>) {
@@ -499,10 +567,12 @@ export async function adminUpdateJurusanGuru(id: number, data: Partial<JurusanGu
     "UPDATE jurusan_guru SET jurusan_id=?, nama=?, jabatan=?, foto=?, urutan=? WHERE id=?",
     [Number(data.jurusan_id), data.nama, data.jabatan || null, data.foto || null, data.urutan || 0, id]
   );
+  revalidatePublicSite();
 }
 
 export async function adminDeleteJurusanGuru(id: number) {
   await query("DELETE FROM jurusan_guru WHERE id = ?", [id]);
+  revalidatePublicSite();
 }
 
 /* ------------------------------------------------------------------ */
@@ -620,6 +690,7 @@ export async function adminCreateHalaman(data: Partial<HalamanStatis>) {
       data.is_published ? 1 : 0,
     ]
   );
+  revalidatePublicSite();
 }
 
 export async function adminUpdateHalaman(id: number, data: Partial<HalamanStatis>) {
@@ -636,10 +707,12 @@ export async function adminUpdateHalaman(id: number, data: Partial<HalamanStatis
       id,
     ]
   );
+  revalidatePublicSite();
 }
 
 export async function adminDeleteHalaman(id: number) {
   await query("DELETE FROM halaman WHERE id = ?", [id]);
+  revalidatePublicSite();
 }
 
 /* ------------------------------------------------------------------ */
@@ -714,6 +787,7 @@ export async function adminUpdatePengaturan(data: Partial<SiteSettings>) {
       [key, value ?? ""]
     );
   }
+  revalidatePublicSite();
 }
 
 /* ------------------------------------------------------------------ */
@@ -737,6 +811,7 @@ export async function adminCreateMenu(data: Partial<MenuItem>) {
       data.is_active === undefined ? 1 : data.is_active ? 1 : 0,
     ]
   );
+  revalidatePublicSite();
 }
 
 export async function adminUpdateMenu(id: number, data: Partial<MenuItem>) {
@@ -751,10 +826,12 @@ export async function adminUpdateMenu(id: number, data: Partial<MenuItem>) {
       id,
     ]
   );
+  revalidatePublicSite();
 }
 
 export async function adminDeleteMenu(id: number) {
   await query("DELETE FROM menu WHERE id = ?", [id]);
+  revalidatePublicSite();
 }
 
 /* ------------------------------------------------------------------ */
@@ -784,6 +861,7 @@ export async function adminCreateHeroSlide(data: Partial<HeroSlide>) {
       data.is_active === undefined ? 1 : data.is_active ? 1 : 0,
     ]
   );
+  revalidatePublicSite();
 }
 
 export async function adminUpdateHeroSlide(id: number, data: Partial<HeroSlide>) {
@@ -801,8 +879,10 @@ export async function adminUpdateHeroSlide(id: number, data: Partial<HeroSlide>)
       id,
     ]
   );
+  revalidatePublicSite();
 }
 
 export async function adminDeleteHeroSlide(id: number) {
   await query("DELETE FROM hero_slide WHERE id = ?", [id]);
+  revalidatePublicSite();
 }

@@ -31,7 +31,7 @@ export function JurusanGuruCrudClient({
     { key: "jurusan_id", label: "Jurusan", type: "select", required: true, options: jurusanOptions },
     { key: "nama", label: "Nama Guru", type: "text", required: true, placeholder: "Nama lengkap" },
     { key: "jabatan", label: "Jabatan / Mata Pelajaran", type: "text", placeholder: "Kepala Program Tata Busana" },
-    { key: "foto", label: "Foto", type: "image" },
+    { key: "foto", label: "Foto", type: "media" },
     { key: "urutan", label: "Urutan Tampil", type: "number" },
   ];
 

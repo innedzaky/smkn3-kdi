@@ -1,16 +1,27 @@
 import Link from "next/link";
 import { getDashboardStats } from "@/lib/admin-queries";
+import { getSessionUser } from "@/lib/auth";
+
+const HARI = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+const BULAN = [
+  "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+  "Juli", "Agustus", "September", "Oktober", "November", "Desember",
+];
+
+function formatTanggalHariIni(): string {
+  const now = new Date();
+  return `${HARI[now.getDay()]}, ${now.getDate()} ${BULAN[now.getMonth()]} ${now.getFullYear()}`;
+}
 
 export default async function AdminDashboardPage() {
-  const stats = await getDashboardStats();
+  const [stats, user] = await Promise.all([getDashboardStats(), getSessionUser()]);
+  const nama = user?.name || "Admin";
+  const peran = user?.role || "Admin";
 
   const cards = [
     { label: "Total Berita", value: stats.totalBerita, icon: "📰", color: "#2563eb", href: "/admin/berita" },
-    { label: "Prestasi", value: stats.totalPrestasi, icon: "🏆", color: "#d97706", href: "/admin/prestasi" },
-    { label: "Foto Galeri", value: stats.totalGaleri, icon: "🖼️", color: "#7c3aed", href: "/admin/galeri" },
     { label: "Agenda", value: stats.totalAgenda, icon: "📅", color: "#16a34a", href: "/admin/agenda" },
     { label: "Pengumuman Aktif", value: stats.totalPengumumanAktif, icon: "📢", color: "#dc2626", href: "/admin/pengumuman" },
-    { label: "Jurusan", value: stats.totalJurusan, icon: "🎓", color: "#0891b2", href: "/admin/jurusan" },
     { label: "Pengguna Admin", value: stats.totalUsers, icon: "👥", color: "#4f46e5", href: "/admin/pengguna" },
   ];
 
@@ -18,8 +29,8 @@ export default async function AdminDashboardPage() {
     <div>
       <div className="admin-page-header">
         <div>
-          <h1>Dashboard</h1>
-          <p>Ringkasan konten website SMK Negeri 3 Kendari.</p>
+          <h1>Selamat Datang Kembali, {nama} ({peran})! 👋</h1>
+          <p>Berikut adalah ringkasan aktivitas Anda hari ini, {formatTanggalHariIni()}.</p>
         </div>
       </div>
 

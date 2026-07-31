@@ -1,3 +1,4 @@
+import Image from "next/image";
 import FadeUp from "@/components/shared/FadeUp";
 import { getSiteSettings } from "@/lib/queries";
 
@@ -14,10 +15,15 @@ export default async function AboutSection() {
         <div className="about-grid">
           <FadeUp>
             <div className="kepala-visual-card">
-              <div
-                className="kepala-photo-render"
-                style={{ backgroundImage: `url('${settings.kepala_foto}')` }}
-              />
+              <div className="kepala-photo-render">
+                <Image
+                  src={settings.kepala_foto}
+                  alt={settings.kepala_nama || "Kepala Sekolah"}
+                  fill
+                  sizes="(max-width: 900px) 100vw, 480px"
+                  style={{ objectFit: "cover", objectPosition: "center top" }}
+                />
+              </div>
               <div className="kepala-blue-overlay" />
               <div className="kepala-blue-gradient" />
               <div className="kepala-caption-area">

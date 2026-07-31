@@ -45,7 +45,7 @@ export function JurusanGaleriDetailCrudClient({
     { key: "jurusan_id", label: "Jurusan", type: "select", required: true, options: jurusanOptions },
     { key: "kategori", label: "Kategori", type: "select", required: true, options: kategoriOptions },
     { key: "judul", label: "Judul Foto", type: "text", required: true, placeholder: "Praktik Menjahit Industri" },
-    { key: "foto", label: "Foto", type: "image", required: true },
+    { key: "foto", label: "Foto", type: "media", required: true },
     { key: "urutan", label: "Urutan Tampil", type: "number" },
   ];
 

@@ -24,7 +24,7 @@ const columns: ColumnConfig<GaleriItem>[] = [
 
 const fields: FieldConfig[] = [
   { key: "judul_kegiatan", label: "Judul Kegiatan", type: "text", required: true, placeholder: "Kegiatan Praktik Tata Boga" },
-  { key: "link_foto", label: "Foto Kegiatan", type: "image", required: true },
+  { key: "link_foto", label: "Foto Kegiatan", type: "media", required: true },
   { key: "urutan", label: "Urutan Tampil", type: "number" },
   { key: "is_published", label: "Status", type: "checkbox", placeholder: "Tampilkan di galeri" },
 ];

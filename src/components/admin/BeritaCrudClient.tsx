@@ -63,9 +63,9 @@ const fields: FieldConfig[] = [
   { key: "tags", label: "Tags", type: "tags", placeholder: "spmb, prestasi, olahraga", hint: "Pisahkan tiap tag dengan koma. Tag baru otomatis dibuat." },
   { key: "penulis", label: "Penulis", type: "text", placeholder: "Admin Sekolah" },
   { key: "deskripsi", label: "Deskripsi Singkat", type: "textarea", required: true, rows: 2, placeholder: "Ringkasan berita untuk daftar/cuplikan" },
-  { key: "konten", label: "Konten Lengkap", type: "textarea", rows: 8, placeholder: "Isi lengkap berita" },
-  { key: "gambar", label: "Gambar Sampul", type: "image" },
-  { key: "is_published", label: "Status", type: "checkbox", placeholder: "Terbitkan sekarang" },
+  { key: "konten", label: "Konten Lengkap", type: "richtext", placeholder: "Isi lengkap berita" },
+  { key: "gambar", label: "Gambar Sampul", type: "media" },
+  { key: "publish", label: "Pengaturan Publikasi", type: "publishbox" },
 ];
 
 export function BeritaCrudClient({ initialItems }: { initialItems: Berita[] }) {

@@ -2,11 +2,14 @@
 
 import { useState } from "react";
 import { ToastStack, type ToastMessage } from "./Toast";
+import { MediaLibraryModal } from "./MediaLibraryModal";
+import { RichTextEditor } from "./RichTextEditor";
+import { PublishBox } from "./PublishBox";
 
 export interface FieldConfig {
   key: string;
   label: string;
-  type: "text" | "textarea" | "number" | "checkbox" | "select" | "image" | "password" | "tags";
+  type: "text" | "textarea" | "number" | "checkbox" | "select" | "image" | "password" | "tags" | "media" | "richtext" | "publishbox";
   required?: boolean;
   options?: { value: string; label: string }[];
   placeholder?: string;
@@ -71,6 +74,7 @@ export function CrudManager<T extends Record<string, any>>({
   const [slugManual, setSlugManual] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploadingKey, setUploadingKey] = useState<string | null>(null);
+  const [mediaPickerKey, setMediaPickerKey] = useState<string | null>(null);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
   const pushToast = (type: ToastMessage["type"], text: string) => {
@@ -79,9 +83,24 @@ export function CrudManager<T extends Record<string, any>>({
     setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 3200);
   };
 
+  const toDatetimeLocal = (v?: string) => {
+    if (!v) return new Date().toISOString().slice(0, 16);
+    const d = new Date(v.replace(" ", "T"));
+    if (isNaN(d.getTime())) return new Date().toISOString().slice(0, 16);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+
   const buildDefaults = () => {
     const base: Record<string, any> = { ...defaultValues };
     for (const f of fields) {
+      if (f.type === "publishbox") {
+        if (base.is_published === undefined) base.is_published = defaultValues.is_published ?? false;
+        if (base.published_at === undefined) base.published_at = toDatetimeLocal();
+        if (base.is_sticky === undefined) base.is_sticky = false;
+        if (base.lock_modified_date === undefined) base.lock_modified_date = false;
+        continue;
+      }
       if (base[f.key] !== undefined) continue;
       base[f.key] = f.type === "checkbox" ? false : f.type === "number" ? 0 : "";
     }
@@ -100,6 +119,12 @@ export function CrudManager<T extends Record<string, any>>({
     for (const f of fields) {
       if (f.type === "checkbox") data[f.key] = !!Number(data[f.key]);
       if (f.type === "tags" && Array.isArray(data[f.key])) data[f.key] = data[f.key].join(", ");
+      if (f.type === "publishbox") {
+        data.is_published = !!Number(data.is_published);
+        data.is_sticky = !!Number(data.is_sticky);
+        data.lock_modified_date = !!Number(data.lock_modified_date);
+        data.published_at = toDatetimeLocal(data.published_at);
+      }
     }
     setEditing(item);
     setFormData(data);
@@ -268,9 +293,11 @@ export function CrudManager<T extends Record<string, any>>({
               <div className="admin-modal-body">
                 {fields.map((f) => (
                   <div key={f.key} className="admin-form-group">
-                    <label htmlFor={f.key}>
-                      {f.label} {f.required && <span className="admin-required">*</span>}
-                    </label>
+                    {f.type !== "publishbox" && (
+                      <label htmlFor={f.key}>
+                        {f.label} {f.required && <span className="admin-required">*</span>}
+                      </label>
+                    )}
 
                     {f.type === "text" || f.type === "password" || f.type === "tags" ? (
                       <input
@@ -341,6 +368,7 @@ export function CrudManager<T extends Record<string, any>>({
                           {uploadingKey === f.key && <div className="admin-form-hint">Mengunggah…</div>}
                           <input
                             type="text"
+                            className="admin-input"
                             placeholder="atau tempel URL gambar"
                             value={formData[f.key] ?? ""}
                             onChange={(e) => handleChange(f.key, e.target.value)}
@@ -348,6 +376,60 @@ export function CrudManager<T extends Record<string, any>>({
                           />
                         </div>
                       </div>
+                    ) : f.type === "media" ? (
+                      <div className="admin-image-field">
+                        {formData[f.key] ? (
+                          <img src={formData[f.key]} alt="" className="admin-image-preview" />
+                        ) : (
+                          <div className="admin-image-placeholder">🖼️</div>
+                        )}
+                        <div style={{ flex: 1 }}>
+                          <div className="admin-media-tabs">
+                            <label className="admin-media-tab-btn">
+                              Upload File
+                              <input
+                                type="file"
+                                accept="image/*"
+                                style={{ display: "none" }}
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) handleImageUpload(f.key, file);
+                                }}
+                              />
+                            </label>
+                            <button
+                              type="button"
+                              className="admin-media-tab-btn"
+                              onClick={() => setMediaPickerKey(f.key)}
+                            >
+                              📚 Pustaka Media
+                            </button>
+                          </div>
+                          {uploadingKey === f.key && <div className="admin-form-hint">Mengunggah…</div>}
+                          <input
+                            type="text"
+                            className="admin-input"
+                            placeholder="atau tempel URL gambar"
+                            value={formData[f.key] ?? ""}
+                            onChange={(e) => handleChange(f.key, e.target.value)}
+                            style={{ marginTop: 6 }}
+                          />
+                        </div>
+                      </div>
+                    ) : f.type === "richtext" ? (
+                      <RichTextEditor
+                        value={formData[f.key] ?? ""}
+                        onChange={(html) => handleChange(f.key, html)}
+                        placeholder={f.placeholder}
+                      />
+                    ) : f.type === "publishbox" ? (
+                      <PublishBox
+                        isPublished={!!formData.is_published}
+                        publishedAt={formData.published_at ?? ""}
+                        isSticky={!!formData.is_sticky}
+                        lockModifiedDate={!!formData.lock_modified_date}
+                        onChange={(patch) => setFormData((prev) => ({ ...prev, ...patch }))}
+                      />
                     ) : null}
 
                     {f.hint && <div className="admin-form-hint">{f.hint}</div>}
@@ -366,6 +448,14 @@ export function CrudManager<T extends Record<string, any>>({
           </div>
         </div>
       )}
+
+      <MediaLibraryModal
+        open={mediaPickerKey !== null}
+        onClose={() => setMediaPickerKey(null)}
+        onSelect={(url) => {
+          if (mediaPickerKey) handleChange(mediaPickerKey, url);
+        }}
+      />
 
       <ToastStack toasts={toasts} />
     </div>

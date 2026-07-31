@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import FadeUp from "@/components/shared/FadeUp";
 import type { AgendaItem, Berita, Pengumuman } from "@/lib/types";
 
@@ -41,15 +42,18 @@ export default function BeritaSection({
                   className="news-card"
                   key={item.id}
                 >
-                  <div
-                    className="news-visual-area"
-                    style={
-                      item.gambar
-                        ? { backgroundImage: `url('${item.gambar}')` }
-                        : undefined
-                    }
-                  >
-                    {!item.gambar && "📰"}
+                  <div className="news-visual-area">
+                    {item.gambar ? (
+                      <Image
+                        src={item.gambar}
+                        alt={item.judul}
+                        fill
+                        sizes="(max-width: 700px) 100vw, 320px"
+                        style={{ objectFit: "cover" }}
+                      />
+                    ) : (
+                      "📰"
+                    )}
                   </div>
                   <div className="news-card-body">
                     <span className="news-tag">{item.kategori || "Sekolah"}</span>

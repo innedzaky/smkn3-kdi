@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import { ToastStack, type ToastMessage } from "./Toast";
+import { MediaLibraryModal } from "./MediaLibraryModal";
+import { RichTextEditor } from "./RichTextEditor";
 
 export interface SettingsFieldConfig {
   key: string;
   label: string;
-  type?: "text" | "textarea" | "image" | "select";
+  type?: "text" | "textarea" | "image" | "select" | "richtext";
   options?: { value: string; label: string }[];
   placeholder?: string;
   hint?: string;
@@ -47,6 +49,7 @@ export function SettingsForm({
   const [values, setValues] = useState<Record<string, string>>(initialValues);
   const [saving, setSaving] = useState(false);
   const [uploadingKey, setUploadingKey] = useState<string | null>(null);
+  const [mediaPickerKey, setMediaPickerKey] = useState<string | null>(null);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
   const pushToast = (type: ToastMessage["type"], text: string) => {
@@ -122,18 +125,32 @@ export function SettingsForm({
                     ) : (
                       <div className="admin-image-placeholder">🖼️</div>
                     )}
-                    <div>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) handleImageUpload(f.key, file);
-                        }}
-                      />
+                    <div style={{ flex: 1 }}>
+                      <div className="admin-media-tabs">
+                        <label className="admin-media-tab-btn">
+                          Upload File
+                          <input
+                            type="file"
+                            accept="image/*"
+                            style={{ display: "none" }}
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleImageUpload(f.key, file);
+                            }}
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          className="admin-media-tab-btn"
+                          onClick={() => setMediaPickerKey(f.key)}
+                        >
+                          📚 Pustaka Media
+                        </button>
+                      </div>
                       {uploadingKey === f.key && <div className="admin-form-hint">Mengunggah…</div>}
                       <input
                         type="text"
+                        className="admin-input"
                         placeholder="atau tempel URL gambar"
                         value={values[f.key] ?? ""}
                         onChange={(e) => handleChange(f.key, e.target.value)}
@@ -148,6 +165,12 @@ export function SettingsForm({
                     placeholder={f.placeholder}
                     value={values[f.key] ?? ""}
                     onChange={(e) => handleChange(f.key, e.target.value)}
+                  />
+                ) : f.type === "richtext" ? (
+                  <RichTextEditor
+                    value={values[f.key] ?? ""}
+                    onChange={(html) => handleChange(f.key, html)}
+                    placeholder={f.placeholder}
                   />
                 ) : f.type === "select" ? (
                   <select
@@ -183,6 +206,14 @@ export function SettingsForm({
           </form>
         </div>
       </div>
+
+      <MediaLibraryModal
+        open={mediaPickerKey !== null}
+        onClose={() => setMediaPickerKey(null)}
+        onSelect={(url) => {
+          if (mediaPickerKey) handleChange(mediaPickerKey, url);
+        }}
+      />
 
       <ToastStack toasts={toasts} />
     </div>

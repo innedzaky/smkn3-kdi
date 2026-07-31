@@ -8,6 +8,8 @@ export interface Berita {
   gambar: string | null;
   penulis: string | null;
   is_published: number;
+  is_sticky: number;
+  lock_modified_date: number;
   published_at: string;
   created_at: string;
   updated_at: string;
@@ -138,6 +140,8 @@ export interface SiteSettings {
   nav_cta_link: string;
   footer_about: string;
   footer_akreditasi: string;
+  footer_copyright_html: string;
+  footer_alamat_html: string;
   sosmed_facebook: string;
   sosmed_instagram: string;
   sosmed_youtube: string;

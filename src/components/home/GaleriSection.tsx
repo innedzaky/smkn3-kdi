@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { GaleriItem } from "@/lib/types";
 import FadeUp from "@/components/shared/FadeUp";
 
@@ -34,10 +35,15 @@ export default function GaleriSection({ galeri }: { galeri: GaleriItem[] }) {
           )}
           {items.map((item) => (
             <div className="galeri-card" key={item.id}>
-              <div
-                className="galeri-img"
-                style={{ backgroundImage: `url('${item.link_foto}')` }}
-              />
+              <div className="galeri-img">
+                <Image
+                  src={item.link_foto}
+                  alt={item.judul_kegiatan}
+                  fill
+                  sizes="(max-width: 700px) 50vw, 280px"
+                  style={{ objectFit: "cover" }}
+                />
+              </div>
               <div className="galeri-overlay" />
               <div className="galeri-body">
                 <h4>{item.judul_kegiatan}</h4>

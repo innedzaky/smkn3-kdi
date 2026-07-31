@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import type { HeroSlide } from "@/lib/types";
 
 const INTERVAL = 5500;
@@ -80,10 +81,20 @@ export default function HeroSlider({
       >
         {slides.map((slide, i) => (
           <div key={slide.id ?? i} className={`slide ${i === current ? "active" : ""}`}>
-            <div
-              className="slide-img"
-              style={{ backgroundImage: `url('${slide.gambar}')` }}
-            />
+            <div className="slide-img">
+              <Image
+                src={slide.gambar}
+                alt={slide.title ? `${slide.title} ${slide.title_accent}`.trim() : "SMK Negeri 3 Kendari"}
+                fill
+                sizes="100vw"
+                style={{ objectFit: "cover" }}
+                // Slide pertama = gambar LCP halaman -> harus priority (no
+                // lazy-load) & tanpa itu Lighthouse akan selalu menandai LCP
+                // lambat. Slide lain tetap lazy sebagaimana next/image default.
+                priority={i === 0}
+                fetchPriority={i === 0 ? "high" : "auto"}
+              />
+            </div>
             <div className="slide-overlay" />
             <div className="slide-content">
               <div className="slide-inner">
@@ -132,22 +143,6 @@ export default function HeroSlider({
         ))}
       </div>
 
-      <div
-        key={current}
-        className="slider-progress"
-        style={{ animation: `progressGrow ${INTERVAL}ms linear forwards` }}
-      />
-
-      <style jsx>{`
-        @keyframes progressGrow {
-          from {
-            width: 0%;
-          }
-          to {
-            width: 100%;
-          }
-        }
-      `}</style>
     </div>
   );
 }

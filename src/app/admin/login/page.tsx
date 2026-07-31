@@ -1,11 +1,13 @@
 import { redirect } from "next/navigation";
+import Image from "next/image";
 import { getSessionUser } from "@/lib/auth";
 
-export default async function AdminLoginPage({
-  searchParams,
-}: {
-  searchParams: { error?: string };
-}) {
+export default async function AdminLoginPage(
+  props: {
+    searchParams: Promise<{ error?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const user = await getSessionUser();
   if (user) redirect("/admin");
 
@@ -15,8 +17,10 @@ export default async function AdminLoginPage({
     <div className="admin-login-page">
       <div className="admin-login-card">
         <div className="admin-login-brand">
-          <div className="admin-login-brand-icon">🎓</div>
-          <h1>Panel Admin CMS</h1>
+          <div className="admin-login-brand-icon">
+            <Image src="/images/logo.png" alt="Logo SMK Negeri 3 Kendari" width={54} height={54} priority />
+          </div>
+          <h1>Halaman Login</h1>
           <p>SMK Negeri 3 Kendari</p>
         </div>
 
@@ -45,8 +49,7 @@ export default async function AdminLoginPage({
         </form>
 
         <p className="admin-login-hint">
-          Login default: <strong>admin</strong> / <strong>admin123</strong> — jalankan{" "}
-          <code>npm run db:seed-admin</code> jika akun belum tersedia.
+          Hak Cipta © 2026 SMKN 3 Kendari
         </p>
       </div>
     </div>

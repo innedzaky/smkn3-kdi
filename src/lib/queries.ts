@@ -152,8 +152,8 @@ async function attachTagsPublic(rows: Berita[]): Promise<Berita[]> {
 export async function getBerita(limit?: number): Promise<Berita[]> {
   try {
     const sql = limit
-      ? "SELECT * FROM berita WHERE is_published = 1 ORDER BY published_at DESC LIMIT ?"
-      : "SELECT * FROM berita WHERE is_published = 1 ORDER BY published_at DESC";
+      ? "SELECT * FROM berita WHERE is_published = 1 AND published_at <= NOW() ORDER BY is_sticky DESC, published_at DESC LIMIT ?"
+      : "SELECT * FROM berita WHERE is_published = 1 AND published_at <= NOW() ORDER BY is_sticky DESC, published_at DESC";
     const rows = await query<Berita>(sql, limit ? [limit] : []);
     if (!rows.length) return fallbackBerita;
     return await attachTagsPublic(rows);

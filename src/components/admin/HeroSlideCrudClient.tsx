@@ -34,7 +34,7 @@ const columns: ColumnConfig<HeroSlide>[] = [
 ];
 
 const fields: FieldConfig[] = [
-  { key: "gambar", label: "Gambar Slide", type: "image", required: true, hint: "Gambar latar belakang penuh (disarankan orientasi lanskap, resolusi lebar)." },
+  { key: "gambar", label: "Gambar Slide", type: "media", required: true, hint: "Gambar latar belakang penuh (disarankan orientasi lanskap, resolusi lebar)." },
   { key: "badge", label: "Label Badge", type: "text", required: true, placeholder: "Contoh: Perhotelan" },
   { key: "title", label: "Judul Baris Pertama", type: "text", required: true, placeholder: "Contoh: Unggul Mutu di Sektor" },
   { key: "title_accent", label: "Judul Baris Kedua (aksen warna)", type: "text", required: true, placeholder: "Contoh: Perhotelan Management" },

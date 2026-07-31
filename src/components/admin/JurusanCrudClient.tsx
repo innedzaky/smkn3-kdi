@@ -28,10 +28,10 @@ const fields: FieldConfig[] = [
   { key: "icon", label: "Ikon Emoji", type: "text", placeholder: "🎓" },
   { key: "deskripsi", label: "Deskripsi", type: "textarea", required: true, rows: 4, placeholder: "Deskripsi lengkap jurusan" },
   { key: "hero_subtitle", label: "Subjudul Hero (opsional)", type: "textarea", rows: 2, placeholder: "Kalimat singkat di bawah judul pada cover halaman jurusan", hint: "Kosongkan jika tidak perlu." },
-  { key: "gambar_url", label: "Gambar Jurusan", type: "image" },
+  { key: "gambar_url", label: "Gambar Jurusan", type: "media" },
   { key: "materiText", label: "Materi Pokok", type: "textarea", rows: 5, placeholder: "Satu materi per baris", hint: "Tulis satu materi per baris, akan tampil sebagai daftar." },
-  { key: "brosur_depan_url", label: "Brosur - Halaman Depan", type: "image", hint: "Ditampilkan pada slider perbandingan brosur di halaman jurusan." },
-  { key: "brosur_belakang_url", label: "Brosur - Halaman Belakang", type: "image" },
+  { key: "brosur_depan_url", label: "Brosur - Halaman Depan", type: "media", hint: "Ditampilkan pada slider perbandingan brosur di halaman jurusan." },
+  { key: "brosur_belakang_url", label: "Brosur - Halaman Belakang", type: "media" },
   { key: "urutan", label: "Urutan Tampil", type: "number" },
 ];
 

@@ -101,14 +101,20 @@ export default async function Footer() {
         </div>
 
         <div className="footer-bottom">
-          <span>
-            © {new Date().getFullYear()} {settings.nama_sekolah}. Hak cipta
-            dilindungi undang-undang.
-          </span>
-          <span>
-            {settings.alamat}
-            {settings.telepon ? ` — ${settings.telepon}` : ""}
-          </span>
+          <span
+            dangerouslySetInnerHTML={{
+              __html:
+                settings.footer_copyright_html ||
+                `© ${new Date().getFullYear()} ${settings.nama_sekolah}. Hak cipta dilindungi undang-undang.`,
+            }}
+          />
+          <span
+            dangerouslySetInnerHTML={{
+              __html:
+                settings.footer_alamat_html ||
+                `${settings.alamat}${settings.telepon ? ` — ${settings.telepon}` : ""}`,
+            }}
+          />
         </div>
       </div>
     </footer>

@@ -1,10 +1,26 @@
 import type { Metadata } from "next";
+import { Playfair_Display, DM_Sans } from "next/font/google";
 import "./globals.css";
-import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
+import { SITE_URL, SITE_NAME } from "@/lib/site";
 
-const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL || "https://smkn3kdi.sch.id";
+// next/font/google mengunduh & meng-host sendiri file font ini saat build
+// (self-hosted), sehingga TIDAK ADA request ke fonts.googleapis.com /
+// fonts.gstatic.com saat runtime. Ini menghilangkan render-blocking request
+// yang disebut di laporan PageSpeed (410-750ms), bukan cuma mempercepatnya
+// dengan preconnect.
+const playfairDisplay = Playfair_Display({
+  subsets: ["latin"],
+  weight: ["400", "700", "900"],
+  variable: "--font-display-google",
+  display: "swap",
+});
+
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600"],
+  variable: "--font-body-google",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -17,6 +33,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     url: SITE_URL,
+    siteName: SITE_NAME,
     title: "SMK Negeri 3 Kendari — Sekolah Pusat Keunggulan",
     description:
       "Official Website Resmi SMK Negeri 3 Kendari. Pusat pendidikan kejuruan pariwisata dan teknologi informasi terkemuka.",
@@ -28,6 +45,15 @@ export const metadata: Metadata = {
       },
     ],
   },
+  icons: {
+    icon: [
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
 };
 
 export default async function RootLayout({
@@ -36,17 +62,9 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="id">
-      <head>
-        <link
-          href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&display=swap"
-          rel="stylesheet"
-        />
-      </head>
+    <html lang="id" className={`${playfairDisplay.variable} ${dmSans.variable}`}>
       <body>
-        <Header />
         {children}
-        <Footer />
       </body>
     </html>
   );
