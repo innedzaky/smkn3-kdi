@@ -30,6 +30,7 @@ jobs:
       - name: Prepare Standalone Build
         run: |
           mkdir -p .next/standalone/.next
+          rm -rf .next/standalone/public
           cp -r public .next/standalone/public
           cp -r .next/static .next/standalone/.next/static
           cp package.json .next/standalone/package.json
