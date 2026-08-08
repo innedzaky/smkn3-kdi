@@ -2,6 +2,14 @@
 const nextConfig = {
   output: 'standalone', // <-- Ditambahkan untuk ekspor aplikasi ringan tanpa node_modules penuh
 
+  // sharp punya binary native yang tidak bisa dibundle oleh Turbopack.
+  // Tanpa ini, Turbopack mencoba membundle sharp lewat mekanisme "external"
+  // internalnya sendiri (nama package jadi diberi hash, mis. sharp-20c6a5d...),
+  // dan mekanisme itu gagal resolve di beberapa environment hosting.
+  // Dengan serverExternalPackages, Next.js akan require('sharp') secara
+  // native langsung dari node_modules saat runtime, tanpa proses bundling.
+  serverExternalPackages: ['sharp'],
+
   images: {
     // Sebagian besar gambar disimpan sebagai path relatif (/images/...),
     // tapi ada data lama di database yang menyimpan URL absolut ke domain
