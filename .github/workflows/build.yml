@@ -34,15 +34,7 @@ jobs:
           cp -r public .next/standalone/public
           cp -r .next/static .next/standalone/.next/static
           cp package.json .next/standalone/package.json
-
-          # sharp's native binary is split into separate optional packages
-          # (e.g. @img/sharp-linux-x64) that are required dynamically at
-          # runtime. Next.js's output file tracing can't follow that dynamic
-          # require, so the standalone build silently drops it unless we
-          # copy it in ourselves.
-          mkdir -p .next/standalone/node_modules
-          cp -r node_modules/sharp .next/standalone/node_modules/sharp
-          cp -r node_modules/@img .next/standalone/node_modules/@img
+          cp package-lock.json .next/standalone/package-lock.json
 
       - name: Deploy to IDCloudHost via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
@@ -62,6 +54,7 @@ jobs:
           exclude: |
             **/.git*
             **/.github/**
+            **/node_modules/**
             **/.next/cache/**
             **/.next/types/**
             README.md
